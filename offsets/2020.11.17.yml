@@ -9,7 +9,32 @@ playerCount: [0x0c]
 playerAddrPtr: 0x10
 exiledPlayerId: [0xff, 0x143BBB4, 0x5c, 0, 0x94, 0x08]
 
-gameCode: [0x1399BD0, 0x5c, 0, 0x20, 0x28]
+gameCode: [0x143BE9C, 0x5C, 0, 0x40]
+
+ship: [0x143C110, 0x5C, 0]
+map: [0xD4]
+allDoorsPtr: [0x7C]
+plainDoorIsOpen: 0x14
+systemsPtr: [0x84]
+
+commsSystemType: 14
+hudOverrideSystemDefIndex: 5873
+hudOverrideSystemIsActive: [0x08]
+hqHudSystemDefIndex: 5765
+hqHudSystemCompletedCount: [0x0C, 0x10]
+
+deconSystemType: 18
+manualDoorDefIndex: 5861
+upperManualDoor: 0x0C
+lowerManualDoor: 0x10
+manualDoorIsOpen: 0x0C
+
+minigame: [0x143BBD4, 0x5C, 0]
+minigameClosingState: [0x1C]
+
+surveillanceDefIndex: 5823
+polusSurveillanceDefIndex: 5740
+polusSurveillanceCurrentCamera: [0x64]
 
 player:
   struct:
