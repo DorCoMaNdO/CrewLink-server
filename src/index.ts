@@ -38,6 +38,7 @@ io.on('connection', (socket: socketIO.Socket) => {
 			return;
 		}
 		code = c;
+		socket.leaveAll();
 		socket.join(code);
 		socket.to(code).broadcast.emit('join', socket.id, id);
 
