@@ -22,10 +22,20 @@ interface Signal {
 }
 
 let connectionCount = 0;
+let codeConnectionCount: any = {};
+
+const lobbySettingsVersion = 1;
+const defaultLobbySettings = {
+	version: lobbySettingsVersion,
+	impostorVentChat: true
+};
+let lobbySettings: any = {};
+let codePlayerCount: any = {};
+//let codePlayerIds: any = {};
 
 app.use(morgan('combined'));
 app.use(express.static('offsets'));
-app.use('/', (_, res) => {
+/*app.use('/', (_, res) => {
 	const rooms = Object.keys(io.sockets.adapter.rooms).length;
 	res.status(200).send(`
 		<!doctype html>
@@ -36,7 +46,7 @@ app.use('/', (_, res) => {
 		</body>
 		</html>
 	`);
-});
+});*/
 
 io.on('connection', (socket: socketIO.Socket) => {
 	connectionCount++;
@@ -49,8 +59,18 @@ io.on('connection', (socket: socketIO.Socket) => {
 			logger.error('Socket %s sent invalid join command: %s %d', socket.id, c, id);
 			return;
 		}
+
 		code = c;
+
+		if (!codeConnectionCount[code]) codeConnectionCount[code] = 0;
+		codeConnectionCount[code]++;
+
+		logger.info('Total connected to code %s : %d', code, codeConnectionCount[code]);
+
+		if (!lobbySettings[code]) lobbySettings[code] = Object.assign({}, defaultLobbySettings);
+
 		socket.leaveAll();
+
 		socket.join(code);
 		socket.to(code).broadcast.emit('join', socket.id, id);
 
@@ -61,22 +81,88 @@ io.on('connection', (socket: socketIO.Socket) => {
 				ids[s] = playerIds.get(s);
 		}
 		socket.emit('setIds', ids);
+
+		/*for (let s of lobbySettings[code]) {
+			logger.info('lobbySetting: ' + s + ' - ' + lobbySettings[code][s]);
+		}*/
+		socket.emit('lobbySettings', lobbySettings[code]);
+	});
+
+	socket.on('setLobbySetting', (setting: string, value: any) => { // Lobby setting changed event, fired 
+		if (!code || codePlayerCount[code] === undefined) return;
+		//if (!code || !codePlayerIds[code]) return;
+
+		if (typeof setting !== 'string' || codePlayerCount[code] > 1) {
+		//if (typeof setting !== 'string' || codePlayerIds[code] > 1) {
+			logger.error('Socket %s from room %s sent invalid lobbySetting command', socket.id, code);
+			return;
+		}
+
+		logger.info('lobbySettings[' + code + '][' + setting + '] = ' + value);
+
+		lobbySettings[code][setting] = value;
+
+		socket.emit('lobbySetting', setting, value);
+		socket.to(code).broadcast.emit('lobbySetting', socket.id, setting, value);
+	});
+
+	socket.on('lobbyPlayerCount', (c: string, count: number) => {
+		if (!c || typeof code !== 'string' || c === 'MENU') return;
+
+		code = c;
+
+		if (!codePlayerCount[code]) codePlayerCount[code] = 0;
+
+		if (codePlayerCount[code] == count) return;
+
+		codePlayerCount[code] = count;
+
+		logger.info('Total players in code %s : %d', code, codePlayerCount[code]);
 	});
 
 	socket.on('id', (id: number) => {
+		if (!code) return;
+
 		if (typeof id !== 'number') {
 			socket.disconnect();
 			logger.error('Socket %s sent invalid id command: %d', socket.id, id);
 			return;
 		}
+		
+		//logger.info('id: ' + id);
+		/*if (!codePlayerIds[code]) codePlayerIds[code] = {};
+		codePlayerIds[code][id] = true;
+
+		logger.info('Total players in code %s : %d', codePlayerIds[code][id]);*/
+
 		playerIds.set(socket.id, id);
 		socket.to(code).broadcast.emit('setId', socket.id, id);
-	})
+	});
 
+	function doLeave() {
+		if (!code) return;
 
-	socket.on('leave', () => {
-		if (code) socket.leave(code);
-	})
+		const c = code;
+		code = null;
+		
+		socket.leave(c);
+
+		if (c && codeConnectionCount[c]) {
+			codeConnectionCount[c]--;
+
+			logger.info('Total connected to code %s : %d', c, codeConnectionCount[c]);
+
+			if (codeConnectionCount[c] > 0) return;
+
+			if (codePlayerCount[c]) codePlayerCount[c] = undefined;
+			//if (codePlayerIds[c]) codePlayerIds[c] = undefined;
+
+			if (lobbySettings[c]) lobbySettings[c] = undefined;
+			codeConnectionCount[c] = undefined;
+		}
+	}
+
+	socket.on('leave', doLeave);
 
 	socket.on('signal', (signal: Signal) => {
 		if (typeof signal !== 'object' || !signal.data || !signal.to || typeof signal.to !== 'string') {
@@ -84,6 +170,7 @@ io.on('connection', (socket: socketIO.Socket) => {
 			logger.error('Socket %s sent invalid signal command: %j', socket.id, signal);
 			return;
 		}
+
 		const { to, data } = signal;
 		io.to(to).emit('signal', {
 			data,
@@ -93,10 +180,13 @@ io.on('connection', (socket: socketIO.Socket) => {
 
 	socket.on('disconnect', () => {
 		connectionCount--;
-		logger.info('Total connected: %d', connectionCount);
-		playerIds.delete(socket.id);
-	})
 
+		logger.info('Total connected: %d', connectionCount);
+
+		doLeave();
+
+		playerIds.delete(socket.id);
+	});
 })
 
 server.listen(port);
