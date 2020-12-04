@@ -67,34 +67,40 @@ io.on('connection', (socket: socketIO.Socket) => {
 
 		logger.info('Total connected to code %s : %d', code, codeConnectionCount[code]);
 
-		if (!lobbySettings[code]) lobbySettings[code] = Object.assign({}, defaultLobbySettings);
-
-		socket.leaveAll();
+		if (!lobbySettings[code]) lobbySettings[code] = Object.assign({}, defaultLobbySettings); // Copy default settings
 
 		socket.join(code);
+
+		playerIds.set(socket.id, id);
+
 		socket.to(code).broadcast.emit('join', socket.id, id);
+
+		//logger.info('Join broadcast in room %s: %s %s', code, socket.id, id);
 
 		let socketsInLobby = Object.keys(io.sockets.adapter.rooms[code].sockets);
 		let ids: any = {};
 		for (let s of socketsInLobby) {
-			if (s !== socket.id)
+			if (s !== socket.id) {
 				ids[s] = playerIds.get(s);
+			}
 		}
 		socket.emit('setIds', ids);
+
+		logger.info('Join reply in room %s: %s %j', code, socket.id, ids);
 
 		/*for (let s of lobbySettings[code]) {
 			logger.info('lobbySetting: ' + s + ' - ' + lobbySettings[code][s]);
 		}*/
-		socket.emit('lobbySettings', lobbySettings[code]);
+		socket.emit('lobbySettings', lobbySettings[code]); // Send current lobby settings
 	});
 
-	socket.on('setLobbySetting', (setting: string, value: any) => { // Lobby setting changed event, fired 
+	socket.on('setLobbySetting', (setting: string, value: any) => { // Lobby setting changed event, fired whenever a setting is changed.
 		if (!code || codePlayerCount[code] === undefined) return;
 		//if (!code || !codePlayerIds[code]) return;
 
 		if (typeof setting !== 'string' || codePlayerCount[code] > 1) {
 		//if (typeof setting !== 'string' || codePlayerIds[code] > 1) {
-			logger.error('Socket %s from room %s sent invalid lobbySetting command', socket.id, code);
+			logger.error('Socket %s from room %s sent invalid setLobbySetting command', socket.id, code);
 			return;
 		}
 
@@ -106,7 +112,7 @@ io.on('connection', (socket: socketIO.Socket) => {
 		socket.to(code).broadcast.emit('lobbySetting', socket.id, setting, value);
 	});
 
-	socket.on('lobbyPlayerCount', (c: string, count: number) => {
+	socket.on('lobbyPlayerCount', (c: string, count: number) => { // Track lobby player count, used to determine whether settings should be changed.
 		if (!c || typeof code !== 'string' || c === 'MENU') return;
 
 		code = c;
@@ -136,30 +142,43 @@ io.on('connection', (socket: socketIO.Socket) => {
 		logger.info('Total players in code %s : %d', codePlayerIds[code][id]);*/
 
 		playerIds.set(socket.id, id);
+
 		socket.to(code).broadcast.emit('setId', socket.id, id);
+		
+		//logger.info('ID broadcast to room %s: %s %s', code, socket.id, id);
 	});
 
 	function doLeave() {
 		if (!code) return;
 
-		const c = code;
-		code = null;
-		
-		socket.leave(c);
+		const id = playerIds.get(socket.id);
+		if (!id) {
+			code = null;
 
-		if (c && codeConnectionCount[c]) {
-			codeConnectionCount[c]--;
-
-			logger.info('Total connected to code %s : %d', c, codeConnectionCount[c]);
-
-			if (codeConnectionCount[c] > 0) return;
-
-			if (codePlayerCount[c]) codePlayerCount[c] = undefined;
-			//if (codePlayerIds[c]) codePlayerIds[c] = undefined;
-
-			if (lobbySettings[c]) lobbySettings[c] = undefined;
-			codeConnectionCount[c] = undefined;
+			return;
 		}
+
+		socket.to(code).broadcast.emit('deleteId', socket.id, id);
+		socket.leave(code);
+
+		playerIds.delete(socket.id);
+		logger.info('Leave room %s: %s', code, socket.id);
+
+		if (code && codeConnectionCount[code]) {
+			codeConnectionCount[code]--;
+
+			logger.info('Total connected to code %s : %d', code, codeConnectionCount[code]);
+
+			if (codeConnectionCount[code] > 0) return;
+
+			if (codePlayerCount[code]) codePlayerCount[code] = undefined;
+			//if (codePlayerIds[code]) codePlayerIds[code] = undefined;
+
+			if (lobbySettings[code]) lobbySettings[code] = undefined;
+			codeConnectionCount[code] = undefined;
+		}
+
+		code = null;
 	}
 
 	socket.on('leave', doLeave);
@@ -178,16 +197,27 @@ io.on('connection', (socket: socketIO.Socket) => {
 		});
 	});
 
+	socket.on('disconnecting', () => {
+		const id = playerIds.get(socket.id);
+		if (!id) return;
+
+		for (const room of Object.keys(socket.rooms)) {
+			if (room !== socket.id) {
+				socket.to(room).broadcast.emit('deleteId', socket.id, id);
+			}
+		}
+	});
+
 	socket.on('disconnect', () => {
 		connectionCount--;
 
 		logger.info('Total connected: %d', connectionCount);
-
+		
 		doLeave();
 
 		playerIds.delete(socket.id);
 	});
-})
+});
 
 server.listen(port);
 logger.info('Server listening on port %d', port);
