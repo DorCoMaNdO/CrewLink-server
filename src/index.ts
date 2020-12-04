@@ -110,7 +110,7 @@ io.on('connection', (socket: socketIO.Socket) => {
 		lobbySettings[code][setting] = value;
 
 		socket.emit('lobbySetting', setting, value);
-		socket.to(code).broadcast.emit('lobbySetting', socket.id, setting, value);
+		socket.to(code).broadcast.emit('lobbySetting', setting, value);
 	});
 
 	socket.on('lobbyPlayerCount', (c: string, count: number) => { // Track lobby player count, used to determine whether settings should be changed.
@@ -153,16 +153,13 @@ io.on('connection', (socket: socketIO.Socket) => {
 		if (!code) return;
 
 		const id = playerIds.get(socket.id);
-		if (!id) {
-			code = null;
-
-			return;
+		if (id) {
+			socket.to(code).broadcast.emit('deleteId', socket.id, id);
+			playerIds.delete(socket.id);
 		}
 
-		socket.to(code).broadcast.emit('deleteId', socket.id, id);
 		socket.leave(code);
 
-		playerIds.delete(socket.id);
 		logger.info('Leave room %s: %s', code, socket.id);
 
 		if (code && codeConnectionCount[code]) {
@@ -215,8 +212,6 @@ io.on('connection', (socket: socketIO.Socket) => {
 		logger.info('Total connected: %d', connectionCount);
 		
 		doLeave();
-
-		playerIds.delete(socket.id);
 	});
 });
 
