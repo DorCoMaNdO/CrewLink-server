@@ -27,7 +27,8 @@ let codeConnectionCount: any = {};
 const lobbySettingsVersion = 1;
 const defaultLobbySettings = {
 	version: lobbySettingsVersion,
-	impostorVentChat: true
+	impostorVentChat: true,
+	commsSabotageVoice: false
 };
 let lobbySettings: any = {};
 let codePlayerCount: any = {};
