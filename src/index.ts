@@ -202,6 +202,8 @@ io.on('connection', (socket: socketIO.Socket) => {
 		for (const room of Object.keys(socket.rooms)) {
 			if (room !== socket.id) {
 				socket.to(room).broadcast.emit('deleteId', socket.id, id);
+				
+				logger.info('Leave room %s: %s', room, socket.id);
 			}
 		}
 	});
