@@ -165,7 +165,7 @@ io.on('connection', (socket: socketIO.Socket) => {
 
 		socket.leave(code);
 
-		logger.info('Leave room %s: %s', code, socket.id);
+		logger.info('Leave room (doLeave) %s: %s', code, socket.id);
 
 		if (code && codeConnectionCount[code]) {
 			codeConnectionCount[code]--;
