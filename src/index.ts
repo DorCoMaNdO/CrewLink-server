@@ -28,7 +28,10 @@ const lobbySettingsVersion = 1;
 const defaultLobbySettings = {
 	version: lobbySettingsVersion,
 	impostorVentChat: true,
-	commsSabotageVoice: false
+	commsSabotageVoice: false,
+	voiceRadius: 2.4,
+	wallObstructedVolume: 0,
+	voiceDistanceModel: 0,
 };
 let lobbySettings: any = {};
 let codePlayerCount: any = {};
@@ -51,7 +54,7 @@ app.use(express.static('offsets'));
 
 io.on('connection', (socket: socketIO.Socket) => {
 	connectionCount++;
-	logger.info("Total connected: %d", connectionCount);
+	logger.info("Total connected (connection): %d", connectionCount);
 	let code: string | null = null;
 
 	socket.on('join', (c: string, id: number) => {
@@ -96,11 +99,13 @@ io.on('connection', (socket: socketIO.Socket) => {
 	});
 
 	socket.on('setLobbySetting', (setting: string, value: any) => { // Lobby setting changed event, fired whenever a setting is changed.
-		if (!code || codePlayerCount[code] === undefined) return;
+		//if (!code || codePlayerCount[code] === undefined) return;
 		//if (!code || !codePlayerIds[code]) return;
+		if (!code) return;
 
-		if (typeof setting !== 'string' || codePlayerCount[code] > 1) {
+		//if (typeof setting !== 'string' || codePlayerCount[code] > 1) {
 		//if (typeof setting !== 'string' || codePlayerIds[code] > 1) {
+		if (typeof setting !== 'string' || playerIds?.get(socket?.id) !== 0) {
 			logger.error('Socket %s from room %s sent invalid setLobbySetting command', socket.id, code);
 			return;
 		}
@@ -211,7 +216,7 @@ io.on('connection', (socket: socketIO.Socket) => {
 	socket.on('disconnect', () => {
 		connectionCount--;
 
-		logger.info('Total connected: %d', connectionCount);
+		logger.info('Total connected (disconnect): %d', connectionCount);
 		
 		doLeave();
 	});
