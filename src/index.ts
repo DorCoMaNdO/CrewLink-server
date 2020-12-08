@@ -33,7 +33,7 @@ const defaultLobbySettings = {
 	exponentialGain: 0.8,
 	voiceRadius: 5.32,
 	//voiceMaxDistance: 6,
-	voiceMaxDistance: 3.75,
+	voiceMaxDistance: 4,
 	windowObstructedVolume: 0.5,
 	windowObstructedMuffle: true,
 	wallObstructedVolume: 0.2,
