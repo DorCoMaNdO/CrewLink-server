@@ -28,10 +28,15 @@ const lobbySettingsVersion = 1;
 const defaultLobbySettings = {
 	version: lobbySettingsVersion,
 	impostorVentChat: true,
-	commsSabotageVoice: false,
-	voiceRadius: 2.4,
-	wallObstructedVolume: 0,
+	commsSabotageVoice: true,
 	voiceDistanceModel: 0,
+	exponentialGain: 0.8,
+	voiceRadius: 5.32,
+	voiceMaxDistance: 6,
+	windowObstructedVolume: 0.5,
+	windowObstructedMuffle: true,
+	wallObstructedVolume: 0.2,
+	wallObstructedMuffle: true,
 };
 let lobbySettings: any = {};
 let codePlayerCount: any = {};
@@ -174,11 +179,11 @@ io.on('connection', (socket: socketIO.Socket) => {
 
 			if (codeConnectionCount[code] > 0) return;
 
-			if (codePlayerCount[code]) codePlayerCount[code] = undefined;
-			//if (codePlayerIds[code]) codePlayerIds[code] = undefined;
+			if (codePlayerCount[code]) delete codePlayerCount[code];
+			//if (codePlayerIds[code]) delete codePlayerIds[code];
 
-			if (lobbySettings[code]) lobbySettings[code] = undefined;
-			codeConnectionCount[code] = undefined;
+			if (lobbySettings[code]) delete lobbySettings[code];
+			delete codeConnectionCount[code];
 		}
 
 		code = null;
