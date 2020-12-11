@@ -143,7 +143,9 @@ io.on('connection', (socket: socketIO.Socket) => {
 
 		if (typeof id !== 'number') {
 			socket.disconnect();
+			
 			logger.error('Socket %s sent invalid id command: %d', socket.id, id);
+
 			return;
 		}
 		
@@ -164,10 +166,11 @@ io.on('connection', (socket: socketIO.Socket) => {
 		if (!code) return;
 
 		const id = playerIds.get(socket.id);
-		if (id) {
-			socket.to(code).broadcast.emit('deleteId', socket.id, id);
+		if (typeof id === 'number') {
+			//socket.to(code).broadcast.emit('deleteId', socket.id, id);
 			playerIds.delete(socket.id);
 		}
+		socket.to(code).broadcast.emit('deleteId', socket.id);
 
 		socket.leave(code);
 
@@ -208,11 +211,11 @@ io.on('connection', (socket: socketIO.Socket) => {
 
 	socket.on('disconnecting', () => {
 		const id = playerIds.get(socket.id);
-		if (!id) return;
+		if (typeof id !== 'number') return;
 
 		for (const room of Object.keys(socket.rooms)) {
 			if (room !== socket.id) {
-				socket.to(room).broadcast.emit('deleteId', socket.id, id);
+				socket.to(room).broadcast.emit('deleteId', socket.id/*, id*/);
 				
 				logger.info('Leave room %s: %s', room, socket.id);
 			}
