@@ -1,0 +1,77 @@
+meetingHud: [0x1C573A4, 0x5c, 0]
+meetingHudCachePtr: [0x8]
+meetingHudState: [0x84]
+exileControllerCachePtr: [0x1C573FC, 0x5C, 0, 0x8]
+gameState: [0x1C57F54, 0x5C, 0, 0x64]
+
+allPlayersPtr: [0x1C57BE8, 0x5c, 0, 0x24]
+allPlayers: [0x08]
+playerCount: [0x0c]
+playerAddrPtr: 0x10
+exiledPlayerId: [0x1C573A4, 0x5c, 0, 0x94, 0x08]
+localPlayerId: [0x1C57F7C, 0x5C, 0, 0x28]
+
+gameCode: [0x1C57F54, 0x5C, 0, 0x40]
+
+ship: [0x1C57CAC, 0x5C, 0]
+map: [0xD4]
+allDoorsPtr: [0x7C]
+plainDoorIsOpen: 0x14
+systemsPtr: [0x84]
+
+commsSystemType: 14
+hudOverrideSystemDefIndex: 9019
+hudOverrideSystemIsActive: [0x08]
+hqHudSystemDefIndex: 9014
+hqHudSystemCompletedCount: [0x0C, 0x10]
+
+deconSystemType: 18
+manualDoorDefIndex: 9007
+upperManualDoor: 0x0C
+lowerManualDoor: 0x10
+manualDoorIsOpen: 0x0C
+
+minigame: [0x1C57F1C, 0x5C, 0]
+minigameClosingState: [0x1C]
+
+surveillanceDefIndex: 8969
+polusSurveillanceDefIndex: 8886
+polusSurveillanceCurrentCamera: [0x64]
+
+player:
+  struct:
+  - type: SKIP
+    skip: 8
+    name: unused
+  - type: UINT
+    name: id
+  - type: UINT
+    name: name
+  - type: UINT
+    name: color
+  - type: UINT
+    name: hat
+  - type: UINT
+    name: pet
+  - type: UINT
+    name: skin
+  - type: UINT
+    name: disconnected
+  - type: UINT
+    name: taskPtr
+  - type: BYTE
+    name: impostor
+  - type: BYTE
+    name: dead
+  - type: SKIP
+    skip: 2
+    name: unused
+  - type: UINT
+    name: objectPtr
+  localX: [0x60, 0x50]
+  localY: [0x60, 0x54]
+  remoteX: [0x60, 0x3C]
+  remoteY: [0x60, 0x40]
+  bufferLength: 56
+  offsets: [0, 0]
+  inVent: [0x31]
