@@ -167,10 +167,11 @@ io.on('connection', (socket: socketIO.Socket) => {
 
 		const id = playerIds.get(socket.id);
 		if (typeof id === 'number') {
-			//socket.to(code).broadcast.emit('deleteId', socket.id, id);
+			socket.to(code).broadcast.emit('deleteId', socket.id/*, id*/);
+
 			playerIds.delete(socket.id);
 		}
-		socket.to(code).broadcast.emit('deleteId', socket.id);
+		//socket.to(code).broadcast.emit('deleteId', socket.id);
 
 		socket.leave(code);
 
